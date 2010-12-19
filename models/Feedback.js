@@ -25,10 +25,14 @@ Feedback.find = function(feedbackID, cb){
 
 Feedback.all = function(cb){
 	client.smembers('feedback:ids', function(err, value){
-		var ids = value.toString().split(',');
-		async.map(ids, Feedback.find, function(err, results){
-			cb(results);
-		});
+		if(value.toString().length > 0){
+			var ids = value.toString().split(',');
+			async.map(ids, Feedback.find, function(err, results){
+				cb(results);
+			});
+		}else{
+			cb([]);
+		}
 	});
 };
 

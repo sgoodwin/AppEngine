@@ -22,8 +22,13 @@ Example Item:
 
 function Update(hash){
 	if(hash !== undefined){
+		this.uid = hash.uid;
 		this.applicationName = hash.applicationName;
 		this.pubDate = hash.pubDate;
+		if(this.pubDate === undefined){
+			var d = new Date();
+			this.pubDate = d.toString();
+		}
 		this.fileURL = hash.fileURL;
 		this.buildNumber = hash.buildNumber;
 		this.versionString = hash.versionString;
@@ -51,10 +56,14 @@ Update.find = function(updateID, cb){
 
 Update.all = function(applicationName, cb){
 	client.smembers(applicationName+':ids', function(err, value){
-		var ids = value.toString().split(',');
-		async.map(ids, Update.find, function(err, results){
-			cb(results);
-		});
+		if(value.toString().length > 0){
+			var ids = value.toString().split(',');
+			async.map(ids, Update.find, function(err, results){
+				cb(results);
+			});
+		}else{
+			cb([]);
+		}
 	});
 };
 
@@ -69,17 +78,18 @@ Update.prototype.update = function(hash){
 };
 
 Update.prototype.destroy = function(applicationName, cb){
-	var base = "update:"+this.uid;
+	var update = this;
+	var base = "update:"+update.uid;
 	var keys = [base+":pubDate", base+":fileURL", base+":buildNumber", base+":versionString", base+":dsaSignature", base+":length"];
-	client.del(key, function(err, retVal){
-		srem(applicationName, this.uid, function(err, result){
+	client.del(keys, function(err, retVal){
+		client.srem(applicationName+":ids", update.uid, function(err, result){
 			cb(true);
 		});
 	});
 };
 
 Update.prototype.toJSON = function(){
-	return {"uid":this.uid,"pubDate": this.pubDate,"fileURL":this.fileURL, "buildNumber":this.buildNumber, "versionString":this.versionString, "dsaSignature":this.dsaSignature, "length":this.length};
+	return {"applicationName":this.applicationName, "uid":this.uid,"pubDate": this.pubDate,"fileURL":this.fileURL, "buildNumber":this.buildNumber, "versionString":this.versionString, "dsaSignature":this.dsaSignature, "length":this.length};
 };
 
 Update.prototype.valid = function(){
@@ -100,12 +110,14 @@ Update.prototype.save = function(applicationName, cb){
 		if(update.uid === undefined){
 			client.incr('updateID', function(err, newid){
 				update.uid = newid;
+				console.log("Storing: " + JSON.stringify(update));
 				update.storeValues(cb);
 			});
 		}else{
 			update.storeValues(cb);
 		}
 	}else{
+		console.log("update not valid");
 		cb(false);
 	}
 };
@@ -113,10 +125,10 @@ Update.prototype.save = function(applicationName, cb){
 Update.prototype.storeValues = function(cb){
 	var update = this;
 	var base = "update:"+update.uid;
-	var keys = [base+":pubDate", update.pubDate, base+":fileURL", update.fileURL, base+":buildNumber", update.buildNumber, base+":versionString", update.versionString, base+":dsaSignature", update.dsaSignature, base+":length", update.length];
+	var valuesAndKeys = [base+":pubDate", update.pubDate, base+":fileURL", update.fileURL, base+":buildNumber", update.buildNumber, base+":versionString", update.versionString, base+":dsaSignature", update.dsaSignature, base+":length", update.length];
 	client.mset(valuesAndKeys, function(err, response){
 		if(response === "OK"){
-			client.sadd(applicationName+':ids', update.uid, function(err, response){
+			client.sadd(update.applicationName+':ids', update.uid, function(err, response){
 				cb(true);
 			});
 		}else{
