@@ -3,4 +3,4 @@ AppEngine is a convenient web-service to handle the following aspects of Mac OSX
 - Generate xml file for Sparkle.
 - Manage application releases (control which apps show in the sparkle feed, etc).
 - Store usage data submitted by Sparkle and generate a summary.
-- Store in-app user-feedback submissions and generate a summary.
+- Store in-app user-feedback submissions and generate a summary.(working)
