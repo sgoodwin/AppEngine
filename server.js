@@ -5,7 +5,8 @@ var express = require('express'),
 	connect = require('connect'),
 	redis = require("redis"),
 	client = redis.createClient(),
-	Feedback = require('./models/Feedback.js');
+	Feedback = require('./models/Feedback.js'),
+	Update = require('./models/Update.js');
 /*
  Configuration
 */
@@ -50,6 +51,17 @@ app.post('/feedback.:format?', function(req, res){
 app.get('/feedback.:format?', function(req, res){
 	Feedback.all(function(feedbacks){
 		res.send(JSON.stringify(feedbacks));
+	});
+});
+
+/*
+	Update handling
+*/
+
+app.get('/:applicationName/updates.:format?', function(req, res){
+	var name = req.param('applicationName');
+	Update.all(name, function(updates){
+		res.send(JSON.stringify(updates));
 	});
 });
 
