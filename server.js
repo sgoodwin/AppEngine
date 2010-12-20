@@ -8,6 +8,7 @@ var formidable = require('formidable'),
 	client = redis.createClient(),
 	Feedback = require('./models/Feedback.js'),
 	Update = require('./models/Update.js'),
+	User = require('./models/User.js'),
 	sys = require('sys'),
 	fs = require('fs'),
 	async = require('async');
@@ -29,6 +30,22 @@ app.configure('production', function(){
 	app.use(connect.errorHandler()); 
 });
 
+// User rejection
+function InvalidUser(msg){
+    this.name = 'InvalidUser';
+    Error.call(this, msg);
+    Error.captureStackTrace(this, arguments.callee);
+}
+
+sys.inherits(InvalidUser, Error);
+app.error(function(err, req, res, next){
+    if (err instanceof InvalidUser) {
+        res.send('Invalid User');
+    } else {
+        next(err);
+    }
+});
+
 /*
  Basic request to make sure server is running.
  */
@@ -38,9 +55,23 @@ app.get('/', function(req, res){
 });
 
 /*
+ Auth support
+*/
+
+function checkUser(req, res, next){
+	User.exists(req.param('key'), function(yesno){
+		if(yesno){
+			next();
+		}else{
+			res.send(JSON.stringify({'error':'Invalid User'}), 401);
+		}	
+	});
+}
+
+/*
 	Feedback handling
 */
-app.post('/feedback.:format?', function(req, res){
+app.post('/feedback.:format?', checkUser, function(req, res){
 	var feedback = new Feedback(req.body);
 	if(feedback.valid()){
 		feedback.save(function(success){
@@ -52,7 +83,7 @@ app.post('/feedback.:format?', function(req, res){
 	}
 });
 
-app.get('/feedback.:format?', function(req, res){
+app.get('/feedback.:format?', checkUser, function(req, res){
 	Feedback.all(function(feedbacks){
 		res.send(JSON.stringify(feedbacks));
 	});
@@ -62,7 +93,7 @@ app.get('/feedback.:format?', function(req, res){
 	Update handling
 */
 
-app.del('/:applicationName/updates.:forma?', function(req, res){
+app.del('/:applicationName/updates.:forma?', checkUser, function(req, res){
 	// Delete all updates listed.
 	var name = req.param('applicationName').toLowerCase();
 	Update.all(name, function(updates){
@@ -74,14 +105,14 @@ app.del('/:applicationName/updates.:forma?', function(req, res){
 	});
 });
 
-app.get('/:applicationName/updates.:format?', function(req, res){
+app.get('/:applicationName/updates.:format?', checkUser, function(req, res){
 	var name = req.param('applicationName').toLowerCase();
 	Update.all(name, function(updates){
 		res.send(JSON.stringify(updates));
 	});
 });
 
-app.post('/:applicationName/updates.:format?', function(req, res){
+app.post('/:applicationName/updates.:format?', checkUser, function(req, res){
 	var form = new formidable.IncomingForm();
 	form.uploadDir = './files/';
 	form.parse(req, function(err, fields, files) {
@@ -93,9 +124,7 @@ app.post('/:applicationName/updates.:format?', function(req, res){
 		if(fileInfo.mime !== 'application/zip') {res.send('Attachment isn\'t a zip file!', 418); }
 		
 		update.length = fileInfo.length;
-		update.fileURL = './files/' + name + update.versionString + '.zip';
-		console.log("about to store" + JSON.stringify(update));
-		
+		update.fileURL = './files/' + name + update.versionString + '.zip';		
 		fs.rename(fileInfo.path, update.fileURL, function(err){
 			if(err) {throw err;}
 			update.save(name, function(success){
