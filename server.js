@@ -21,7 +21,7 @@ app.configure(function(){
 	app.use(connect.methodOverride());
 	app.use(app.router);
 });
-
+app.set('view engine', 'jade');
 app.configure('development', function(){
 	app.use(connect.errorHandler({ dumpExceptions: true, showStack: true })); 
 });
@@ -59,7 +59,8 @@ app.get('/', function(req, res){
 */
 
 function checkUser(req, res, next){
-	User.exists(req.param('key'), function(yesno){
+  var userKey = req.header('key');
+	User.exists(userKey, function(yesno){
 		if(yesno){
 			next();
 		}else{
@@ -105,10 +106,20 @@ app.del('/:applicationName/updates.:forma?', checkUser, function(req, res){
 	});
 });
 
-app.get('/:applicationName/updates.:format?', checkUser, function(req, res){
+app.get('/:applicationName/updates.:format?', function(req, res){
 	var name = req.param('applicationName').toLowerCase();
 	Update.all(name, function(updates){
-		res.send(JSON.stringify(updates));
+		if(req.param('format') == 'json'){
+			res.send(JSON.stringify(updates));
+		}
+		if(req.param('format') == 'sparkle'){
+			res.render('updates.jade', {
+			  layout: false,
+				locals: {
+					updates: updates
+				}
+			});
+		}
 	});
 });
 
@@ -116,29 +127,30 @@ app.post('/:applicationName/updates.:format?', checkUser, function(req, res){
 	var form = new formidable.IncomingForm();
 	form.uploadDir = './files/';
 	form.parse(req, function(err, fields, files) {
-		var update = new Update(fields);
-		var name = req.param('applicationName').toLowerCase();
-		update.applicationName = name;
-		
-		var fileInfo = files.app;
-		if(fileInfo.mime !== 'application/zip') {res.send('Attachment isn\'t a zip file!', 418); }
-		
-		update.length = fileInfo.length;
-		update.fileURL = './files/' + name + update.versionString + '.zip';		
-		fs.rename(fileInfo.path, update.fileURL, function(err){
-			if(err) {throw err;}
-			update.save(name, function(success){
-				if(success){
-					res.send('OK');
-				}else{
-					res.send(418);
-				}
-			});
-		});
-	});
+	     var update = new Update(fields);
+	     var name = req.param('applicationName').toLowerCase();
+	     update.applicationName = name;
+	     
+	     var fileInfo = files.app;
+	     if(fileInfo.mime !== 'application/zip') {res.send('Attachment isn\'t a zip file!', 418); }
+	     
+	     update.length = fileInfo.length;
+	     update.fileURL = './files/' + name + update.versionString + '.zip';   
+	     fs.rename(fileInfo.path, update.fileURL, function(err){
+	       if(err) {throw err;}
+	       update.save(name, function(success){
+	         if(success){
+	           res.send('OK');
+	         }else{
+	           res.send(418);
+	         }
+	       });
+	     });
+	   });
 });
 
 /*
  Start server now.
 */
 if (!module.parent) {app.listen(8080);}
+console.log("Listening on port 8080..... now!");
