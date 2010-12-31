@@ -3,6 +3,7 @@ require 'uri'
 require 'rubygems'
 require 'yajl'
 require 'rest_client'
+require 'net/http/post/multipart'
 require "base64"
 
 def parse_json(string)
@@ -25,18 +26,35 @@ end
 
 def check_new_update
   puts "\r\n\r\nJSON New update:"
-  dict = {'buildNumber'=>'2', 'versionString'=>'1.0b1', 'dsaSignature'=>'abseddhdighvwihviwhvvhiwivh', 'app'=> Base64.encode64(IO.read('./YoutubeTest.zip'))}
-  headers = {:key=>'buttsbuttsbutts'}
-  res = RestClient.post('http://localhost:8080/tvlog/updates.json', dict, headers)
-  res.body
-rescue => e
-  if(e.respond_to?('response'))
-    parse_json(e.response)
-  else
-    puts e.backtrace
+  headers = {'key'=>'buttsbuttsbutts'}
+
+  url = URI.parse('http://localhost:8080/tvlog/updates.json')
+  File.open("./YoutubeTest.zip") do |zip|
+    dict = {'buildNumber'=>'2', 'versionString'=>'1.0b1', 'dsaSignature'=>'abseddhdighvwihviwhvvhiwivh', "app" => UploadIO.new(zip, "application/octet-stream", "YoutubeTest.zip")}
+    req = Net::HTTP::Post::Multipart.new(url.path, dict, headers)
+    res = Net::HTTP.start(url.host, url.port) do |http|
+      http.request(req)
+    end
+    return res
   end
 end
-puts check_new_update
+#puts check_new_update
+
+def check_new_dummy
+  puts "\r\n\r\nJSON New dummy file:"
+  headers = {'key'=>'buttsbuttsbutts'}
+
+  url = URI.parse('http://localhost:8080/tvlog/updates.json')
+  File.open("./feedback_tests.rb") do |zip|
+    dict = {'buildNumber'=>'2', 'versionString'=>'1.0b1', 'dsaSignature'=>'abseddhdighvwihviwhvvhiwivh', "app" => UploadIO.new(zip, "application/octet-stream", "feedback_tests.rb")}
+    req = Net::HTTP::Post::Multipart.new(url.path, dict, headers)
+    res = Net::HTTP.start(url.host, url.port) do |http|
+      http.request(req)
+    end
+    return res
+  end
+end
+puts check_new_dummy
 
 def check_update_list_json
   puts "\r\n\r\nUpdate list JSON:"
