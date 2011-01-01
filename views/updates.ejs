@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns="http://purl.org/dc/elements/1.1/">
+	<channel>
+		<title><%= name %> App Changelog</title>
+		<link><%= url %></link>
+		<description>Most recent changes with links to updates.</description>
+		<language>en</language>
+		<% for(var i = 0;i<updates.length;i++) {%>
+		<% update = updates[i] %>
+		 	<item>
+				<title>Version <%= update.versionString %></title>
+					<sparkle:releaseNotesLink>
+						<%= update.releaseNotesURL %>
+					</sparkle:releaseNotesLink>
+				<pubDate><%= update.pubDate %></pubDate>
+				<enclosure url="<%= update.fileURL %>" sparkle:dsaSignature="<%= update.dsaSignature %>" sparkle:shortVersionString="<%= update.versionString %>" sparkle:version="<%= update.buildNumber %>" length="<%= update.length %>" type="application/octet-stream"></enclosure>
+			</item>
+		<% } %>
+	</channel>
+</rss>

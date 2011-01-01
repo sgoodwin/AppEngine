@@ -23,7 +23,7 @@ app.configure(function(){
   app.use(connect.methodOverride());
   app.use(app.router);
 });
-app.set('view engine', 'jade');
+
 app.configure('development', function(){
   app.use(connect.errorHandler({ dumpExceptions: true, showStack: true })); 
 });
@@ -98,7 +98,7 @@ Update handling
 
 app.del('/:applicationName/updates.:forma?', checkUser, function(req, res){
   // Delete all updates listed.
-  var name = req.param('applicationName').toLowerCase();
+  var name = req.param('applicationName');
   Update.all(name, function(updates){
     async.forEach(updates, function(update, callback){
       update.destroy(name, callback);
@@ -109,53 +109,31 @@ app.del('/:applicationName/updates.:forma?', checkUser, function(req, res){
 });
 
 app.get('/:applicationName/updates.:format?', function(req, res){
-  var name = req.param('applicationName').toLowerCase();
+  var name = req.param('applicationName');
   Update.all(name, function(updates){
     if(req.param('format') == 'json'){
       res.send(JSON.stringify(updates));
     }
     if(req.param('format') == 'sparkle'){
-      res.render('updates.jade', {
+      res.render('updates.ejs', {
         layout: false,
         locals: {
-          updates: updates
+          name: req.param('applicationName'),
+          updates: updates,
+          url: "http://"+req.header('host')+req.url
         }
       });
     }
   });
 });
 
-app.post('/:applicationName/updates.:format?', checkUser, function(req, res){
-  console.log('POST to updates for ' + req.param('applicationName') + ' format:' + req.param('format'));
-  var form = new formidable.IncomingForm();
-  form.parse(req, function(err, fields, files) {
-    res.writeHead(200, {'content-type': 'text/plain'});
-    res.write('received upload:\n\n');
-    res.end(sys.inspect({fields: fields, files: files}));
+app.post('/:applicationName/updates.:format?', checkUser, function(req, res){  
+  var update = new Update(req.body);
+  var name = req.param('applicationName');
+  update.applicationName = name;
+  update.save(name, function(truefalse){
+    res.send(JSON.stringify({'sucesss': truefalse}));
   });
-      
-    // if (err) { throw(err); }
-    //     console.log('\nuploaded %s to %s',  files.image.filename, files.image.path);
-    //       
-    //     var update = new Update(fields);
-    //     var name = req.param('applicationName').toLowerCase();
-    //     update.applicationName = name;
-    //       
-    //     var fileInfo = files.app;
-    //     if(fileInfo.mime !== 'application/zip') {res.send('Attachment isn\'t a zip file!', 418); }
-    //             
-    //     update.length = fileInfo.length;
-    //     update.fileURL = './files/' + name + update.versionString + '.zip';   
-    //     fs.rename(fileInfo.path, update.fileURL, function(err){
-    //       if(err) {throw err;}
-    //       update.save(name, function(success){
-    //         if(success){
-    //           res.send('OK');
-    //         }else{
-    //           res.send(418);
-    //         }
-    //       });
-    //});
 });
 
 /*
