@@ -34,7 +34,6 @@ function Update(hash){
 		this.versionString = hash.versionString;
 		this.dsaSignature = hash.dsaSignature;
 		this.length = hash.length;
-		this.releaseNotesURL = hash.releaseNotesURL;
 	}
 }
 
@@ -42,7 +41,7 @@ Update.find = function(updateID, cb){
 	var dict = {};
 	dict.uid = updateID.toString();
 	var base = "update:"+updateID;
-	var keys = [base+":pubDate", base+":fileURL", base+":buildNumber", base+":versionString", base+":dsaSignature", base+":length", base+":releaseNotesURL"];
+	var keys = [base+":pubDate", base+":fileURL", base+":buildNumber", base+":versionString", base+":dsaSignature", base+":length"];
 	client.mget(keys, function(err, values){
 		if(values[0] !== null) { dict.pubDate = values[0].toString();}
 		if(values[1] !== null) { dict.fileURL = values[1].toString();}
@@ -50,7 +49,6 @@ Update.find = function(updateID, cb){
 		if(values[3] !== null) { dict.versionString = values[3].toString();}
 		if(values[4] !== null) { dict.dsaSignature = values[4].toString();}
 		if(values[5] !== null) { dict.length = values[5].toString();}
-		if(values[6] !== null) { dict.releaseNotesURL = values[6].toString();}
 		var newUpdate = new Update(dict);
 		cb(err, newUpdate);
 	});
@@ -77,13 +75,12 @@ Update.prototype.update = function(hash){
 	if(hash.versionString !== undefined){this.versionString = hash.versionString;}
 	if(hash.dsaSignature !== undefined){this.dsaSignature = hash.dsaSignature;}
 	if(hash.length !== undefined){this.length = hash.length;}
-	if(hash.releaseNotesURL !== undefined){this.releaseNotesURL = hash.releaseNotesURL;}
 };
 
 Update.prototype.destroy = function(applicationName, cb){
 	var update = this;
 	var base = "update:"+update.uid;
-	var keys = [base+":pubDate", base+":fileURL", base+":buildNumber", base+":versionString", base+":dsaSignature", base+":length", base+":releaseNotesURL"];
+	var keys = [base+":pubDate", base+":fileURL", base+":buildNumber", base+":versionString", base+":dsaSignature", base+":length"];
 	client.del(keys, function(err, retVal){
 		client.srem(applicationName+":ids", update.uid, function(err, result){
 			cb(true);
@@ -92,7 +89,7 @@ Update.prototype.destroy = function(applicationName, cb){
 };
 
 Update.prototype.toJSON = function(){
-	return {"applicationName":this.applicationName, "uid":this.uid,"pubDate": this.pubDate,"fileURL":this.fileURL, "buildNumber":this.buildNumber, "versionString":this.versionString, "dsaSignature":this.dsaSignature, "length":this.length, "releaseNotesURL":this.releaseNotesURL};
+	return {"applicationName":this.applicationName, "uid":this.uid,"pubDate": this.pubDate,"fileURL":this.fileURL, "buildNumber":this.buildNumber, "versionString":this.versionString, "dsaSignature":this.dsaSignature, "length":this.length};
 };
 
 Update.prototype.valid = function(){
@@ -103,7 +100,6 @@ Update.prototype.valid = function(){
 	if(this.versionString === undefined){return false;}
 	if(this.dsaSignature === undefined){return false;}
 	if(this.length === undefined){return false;}
-	if(this.releaseNotesURL === undefined){return false;}
 	return true;
 };
 
@@ -128,7 +124,7 @@ Update.prototype.save = function(applicationName, cb){
 Update.prototype.storeValues = function(cb){
 	var update = this;
 	var base = "update:"+update.uid;
-	var valuesAndKeys = [base+":pubDate", update.pubDate, base+":fileURL", update.fileURL, base+":buildNumber", update.buildNumber, base+":versionString", update.versionString, base+":dsaSignature", update.dsaSignature, base+":length", update.length, base+":releaseNotesURL", update.releaseNotesURL];
+	var valuesAndKeys = [base+":pubDate", update.pubDate, base+":fileURL", update.fileURL, base+":buildNumber", update.buildNumber, base+":versionString", update.versionString, base+":dsaSignature", update.dsaSignature, base+":length", update.length];
 	client.mset(valuesAndKeys, function(err, response){
 		if(response === "OK"){
 			client.sadd(update.applicationName+':ids', update.uid, function(err, response){
