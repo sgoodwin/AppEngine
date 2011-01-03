@@ -9,6 +9,7 @@ var express = require('express'),
     Feedback = require('./models/Feedback.js'),
     Update = require('./models/Update.js'),
     User = require('./models/User.js'),
+    Stat = require('./models/Stat.js'),
     sys = require('sys'),
     fs = require('fs'),
     async = require('async');
@@ -110,6 +111,10 @@ app.del('/:applicationName/updates.:forma?', checkUser, function(req, res){
 
 app.get('/:applicationName/updates.:format?', function(req, res){
   var name = req.param('applicationName');
+  var stat = new Stat(req.query);
+  stat.save(name, function(truefalse){
+    console.log("Saving stats: " + truefalse);
+  });
   Update.all(name, function(updates){
     if(req.param('format') == 'json'){
       res.send(JSON.stringify(updates));
