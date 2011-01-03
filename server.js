@@ -75,8 +75,11 @@ function checkUser(req, res, next){
 /*
 Feedback handling
 */
-app.post('/feedback.:format?', checkUser, function(req, res, next){
+app.post('/:applicationName/feedback.:format?', checkUser, function(req, res){
+  var name = req.param('applicationName');
   var feedback = new Feedback(req.body);
+  feedback.applicationName = name;
+  console.log("Saving feedback: " + JSON.stringify(feedback));
   if(feedback.valid()){
     feedback.save(function(success){
       // Possibly generate email or some such here.

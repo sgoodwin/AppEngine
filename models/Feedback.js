@@ -7,6 +7,7 @@ function Feedback(hash){
 		this.uid = hash.uid;
 		this.email = hash.email;
 		this.text = hash.text;
+		this.applicationName = hash.applicationName;
 	}
 }
 
@@ -14,10 +15,11 @@ Feedback.find = function(feedbackID, cb){
 	var dict = {};
 	dict.uid = feedbackID.toString();
 	var baseString = "feedback:"+feedbackID;
-	var keys = [baseString+":email", baseString+":text"];
+	var keys = [baseString+":email", baseString+":text" + baseString+":applicationName"];
 	client.mget(keys, function(err, values){
 		if(values[0] !== null) { dict.email = values[0].toString();}
 		if(values[1] !== null) { dict.text = values[1].toString();}
+		if(values[2] !== null) { dict.applicationName = values[2].toString();}
 		var newFeedback = new Feedback(dict);
 		cb(err, newFeedback);
 	});
@@ -39,21 +41,22 @@ Feedback.all = function(cb){
 Feedback.prototype.update = function(hash){
 	if(hash.email !== undefined){this.email = hash.email;}
 	if(hash.text !== undefined){this.text = hash.text;}
+	if(hash.applicationName !== undefined){this.applicationName = hash.applicationName;}
 };
 
 Feedback.prototype.destroy = function(cb){
 	var baseString = "feedback:"+this.uid;
-	client.del([baseString+":title", baseString+":htmlURL", baseString+":rssURL"], function(err, retVal){
+	client.del([baseString+":email", baseString+":text", baseString+":applicationName"], function(err, retVal){
 		cb(true);
 	});
 };
 
 Feedback.prototype.toJSON = function(){
-	return {"uid":this.uid,"email": this.email,"text":this.text};
+	return {"uid":this.uid,"applicationName":this.applicationName, "email": this.email,"text":this.text};
 };
 
 Feedback.prototype.valid = function(){
-	return (this.text !== undefined); // emails are optional
+	return (this.text !== undefined && this.applicationName !== undefined); // emails are optional
 };
 
 Feedback.prototype.save = function(cb){
@@ -75,7 +78,7 @@ Feedback.prototype.save = function(cb){
 Feedback.prototype.storeValues = function(cb){
 	var feedback = this;
 	var baseString = "feedback:"+feedback.uid;
-	var valuesAndKeys = [baseString+":email", feedback.email, baseString+":text", feedback.text];
+	var valuesAndKeys = [baseString+":email", feedback.email, baseString+":text", feedback.text, baseString+":applicationName", feedback.applicationName];
 	client.mset(valuesAndKeys, function(err, response){
 		if(response === "OK"){
 			client.sadd('feedback:ids', feedback.uid, function(err, response){
