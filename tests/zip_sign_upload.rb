@@ -17,10 +17,21 @@ bucketName = "goodwinlabs"
 
 plistFilePath = "#{filePath}/Contents/#{plistFileName}"
 puts "Checking for plist info at #{plistFilePath}"
-plist, format = OSX::PropertyList.load_file(plistFilePath, true)
+begin
+  plist, format = OSX::PropertyList.load_file(plistFilePath, true)
+rescue OSX::PropertyListError => e
+  puts "You need to supply the path to a legit property!"
+  exit
+end
+
 versionString = plist["CFBundleShortVersionString"]
 bundleVersion = plist["CFBundleVersion"]
 name = plist["CFBundleName"]
+if(versionString == nil || bundleVersion == nil || name == nil)
+  puts "You need to supply the path to a legit property!"
+  exit
+end
+
 puts "Submitting application with the following data:"
 puts "Bundle Name: #{name}"
 puts "Identifier: #{plist["CFBundleIdentifier"]}"
