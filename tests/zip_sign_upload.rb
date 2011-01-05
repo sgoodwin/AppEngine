@@ -71,7 +71,7 @@ AWS::S3::S3Object.store(zipFileName, open(zipFileName), bucketName)
 amazon_url = "https://s3.amazonaws.com/#{bucketName}/#{zipFileName}"
 headers = {:key=>key_string}
 dict = {'buildNumber'=>bundleVersion, 'versionString'=>versionString, 'dsaSignature'=>dsaSignature, "fileURL" => amazon_url, "length"=>File.size(zipFileName)}
-res = RestClient.post("http://0.0.0.0:8080/#{name}/updates.json", dict, headers);
+res = RestClient.post("http://appengine.goodwinlabs.com/#{name}/updates.json", dict, headers);
 res.body
 
 puts "\n\nEnjoy!"

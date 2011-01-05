@@ -112,6 +112,7 @@ app.del('/:applicationName/updates.:forma?', checkUser, function(req, res){
 });
 
 app.get('/:applicationName/updates.:format?', function(req, res){
+  console.log(process.cwd());
   var name = req.param('applicationName');
   var stat = new Stat(req.query);
   stat.save(name, function(truefalse){
