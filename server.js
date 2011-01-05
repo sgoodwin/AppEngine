@@ -98,6 +98,14 @@ app.get('/feedback.:format?', checkUser, function(req, res){
   });
 });
 
+app.del('/feedback.:format?', checkUser, function(req, res){
+  Feedback.all(function(feedbacks){
+    feedback.destroy(function(success){
+      res.send(success.toString());
+    });
+  });
+});
+
 /*
 Update handling
 */
