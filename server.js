@@ -3,7 +3,6 @@ Pull in deps.
 */
 var express = require('express'),
     connect = require('connect'),
-    formidable = require('formidable'),
     redis = require("redis"),
     client = redis.createClient(),
     Feedback = require('./models/Feedback.js'),
