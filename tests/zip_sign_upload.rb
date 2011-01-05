@@ -71,7 +71,7 @@ AWS::S3::Base.establish_connection!(
 )
 puts "Looking for file to upload here: #{zipFilePath}"
 AWS::S3::S3Object.store(zipFileName, open("#{zipFilePath}"), bucketName)
-exit
+
 amazon_url = "https://s3.amazonaws.com/#{bucketName}/#{zipFileName}"
 headers = {:key=>key_string}
 dict = {'buildNumber'=>bundleVersion, 'versionString'=>versionString, 'dsaSignature'=>dsaSignature, "fileURL" => amazon_url, "length"=>File.size(zipFilePath)}
