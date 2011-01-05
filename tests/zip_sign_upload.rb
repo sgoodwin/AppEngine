@@ -48,7 +48,7 @@ puts "\n"
 
 baseName = filePath.split('/').last
 basePath = filePath.gsub(baseName, '')
-zipFileName = baseName.gsub('.app', "#{versionString}.zip")
+zipFileName = baseName.gsub('.app', "#{versionString}#{bundleVersion}.zip")
 zipFilePath = "#{basePath}#{zipFileName}"
 puts "Using zip file Path: #{zipFilePath}"
 if(File.exists?(zipFilePath))
