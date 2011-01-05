@@ -5,7 +5,7 @@ God.watch do |w|
   w.group    = 'node-god'
   w.interval = 5.seconds
 
-  w.start  = "cd #{app_root};env node server.js"
+  w.start  = "env node #{app_root}/server.js"
   w.stop  = "env killall node"
 
   w.uid = ENV['USER']
