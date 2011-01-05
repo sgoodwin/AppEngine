@@ -17,9 +17,9 @@ Feedback.find = function(feedbackID, cb){
 	var baseString = "feedback:"+feedbackID;
 	var keys = [baseString+":email", baseString+":text" + baseString+":applicationName"];
 	client.mget(keys, function(err, values){
-		if(values[0] !== null) { dict.email = values[0].toString();}
-		if(values[1] !== null) { dict.text = values[1].toString();}
-		if(values[2] !== null) { dict.applicationName = values[2].toString();}
+		if(values[0] !== null && values[0] !== undefined) { dict.email = values[0].toString();}
+		if(values[1] !== null && values[1] !== undefined) { dict.text = values[1].toString();}
+		if(values[2] !== null && values[2] !== undefined) { dict.applicationName = values[2].toString();}
 		var newFeedback = new Feedback(dict);
 		cb(err, newFeedback);
 	});
